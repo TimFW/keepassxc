@@ -272,7 +272,6 @@ bool Database::setKey(const CompositeKey& key, bool updateChangedTime, bool upda
     if (updateChangedTime) {
         m_metadata->setMasterKeyChanged(QDateTime::currentDateTimeUtc());
     }
-    emit modifiedImmediate();
 
     return true;
 }
