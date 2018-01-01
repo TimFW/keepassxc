@@ -261,6 +261,7 @@ bool Database::setKey(const CompositeKey& key, bool updateChangedTime, bool upda
         m_data.kdf->randomizeSeed();
     }
 
+    QByteArray oldTransformedMasterKey = m_data.transformedMasterKey;
     QByteArray transformedMasterKey;
     if (!key.transform(*m_data.kdf, transformedMasterKey)) {
         return false;
@@ -271,6 +272,10 @@ bool Database::setKey(const CompositeKey& key, bool updateChangedTime, bool upda
     m_data.hasKey = true;
     if (updateChangedTime) {
         m_metadata->setMasterKeyChanged(QDateTime::currentDateTimeUtc());
+    }
+
+    if (oldTransformedMasterKey != m_data.transformedMasterKey) {
+        emit modifiedImmediate();
     }
 
     return true;
@@ -460,7 +465,9 @@ QString Database::saveToFile(QString filePath)
     if (saveFile.open(QIODevice::WriteOnly)) {
 
         // write the database to the file
+        setEmitModified(false);
         writer.writeDatabase(&saveFile, this);
+        setEmitModified(true);
 
         if (writer.hasError()) {
             return writer.errorString();
